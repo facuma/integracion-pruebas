@@ -1,0 +1,29 @@
+# --- General ---
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# --- Docker ---
+docker-compose.override.yml
+.env
+
+# --- .NET (Logística) ---
+**/bin/
+**/obj/
+**/appsettings.Development.json
+# Si quieres subir las credenciales para el TP, comenta la linea de abajo con #
+# **/appsettings.json 
+
+# --- Node.js (Stock & Gateway) ---
+**/node_modules/
+**/dist/
+**/coverage/
+npm-debug.log
+
+# --- Keycloak ---
+# Ignorar datos de importación si son temporales (opcional)
+# keycloak/realm-config/
+
+# --- CSVs (Opcional, si no quieres subir los datos de prueba) ---
+# **/csvs/
