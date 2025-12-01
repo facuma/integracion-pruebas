@@ -6,13 +6,16 @@ services:
     build: ./api-gateway
     container_name: gateway_nginx
     ports:
-      - "80:80"
+      - "8085:80"
     networks:
       - app-network
     depends_on:
       - logistica-api
       - stock-api
       - compras-api
+    # AGREGADO: Montamos el archivo de conf para que lea los cambios de puerto al instante
+    volumes:
+      - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf
 
   # ==============================================================================
   # 3. LOGÍSTICA API (Grupo 06)
@@ -22,24 +25,25 @@ services:
     container_name: logistica_api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80 
       - ConnectionStrings__DefaultConnection=server=logistica-db;port=3306;database=apidepapas;user=ApiUser;password=ApiDePapas_G6_Logistica;ConvertZeroDateTime=True;AllowLoadLocalInfile=true
       - Authentication__Keycloak__Authority=https://keycloak.cubells.com.ar/realms/ds-2025-realm
       - Authentication__Keycloak__Audience=grupo-06
       - StockApi__BaseUrl=http://gateway:80/stock/productos/
       - DB_HOST=logistica-db 
     ports:
-      - "5002:8080"
+      - "5002:80"
     networks:
       - app-network
     depends_on:
-      - logistica-db
-    links:
-      - logistica-db:db
+      logistica-db:
+        condition: service_healthy
     volumes:
       - ./api-logistica/docs/csvs:/app/csvs
 
   logistica-db:
-    image: mysql:8.0
+    # Mantenemos la versión compatible con tu CPU
+    image: mysql:8.0.28
     container_name: logistica_db
     command: --local-infile=1
     environment:
@@ -47,10 +51,19 @@ services:
       MYSQL_USER: ApiUser
       MYSQL_PASSWORD: ApiDePapas_G6_Logistica
       MYSQL_ROOT_PASSWORD: root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - logistica_db_data:/var/lib/mysql
     networks:
-      - app-network
+      app-network:
+        aliases:
+          - db
+          - logistica-db
 
   # ==============================================================================
   # 4. STOCK API (Grupo 08)
@@ -60,7 +73,6 @@ services:
       context: ./api-stock/backend 
       dockerfile: Dockerfile
     container_name: stock_backend
-    # Comando "a prueba de balas"
     command: /bin/sh -c "npm run migration:run || true; npm run seed || true; node dist/main"
     environment:
       - DB_HOST=stock-db
@@ -107,17 +119,16 @@ services:
       - ConnectionStrings__DefaultConnection=Server=compras-db;Database=dbcomprasapi;User=compras_user;Password=compras_password
       - Keycloak__Authority=https://keycloak.cubells.com.ar/realms/ds-2025-realm
       - Keycloak__AdminBaseUrl=https://keycloak.cubells.com.ar
-      
       - Keycloak__Audience=grupo-10
       - Keycloak__ClientId=grupo-10
       - Keycloak__ClientSecret=66ff9787-4fa5-46b3-b546-4ccbe604d233
       - Keycloak__RequireHttpsMetadata=true
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80 # Escucha en el puerto 80 interno
+      - ASPNETCORE_URLS=http://+:80
       - ExternalApis__Logistica__BaseUrl=http://gateway:80/logistica/
       - ExternalApis__Stock_BaseUrl=http://gateway:80/stock/productos/
     ports:
-      - "5001:80" # Exponemos en 5001 para no chocar con Logística (5002)
+      - "5001:80"
     depends_on:
       compras-db:
         condition: service_healthy
@@ -125,7 +136,7 @@ services:
       - app-network
 
   compras-db:
-    image: mysql:8.0
+    image: mariadb:10.6
     container_name: compras-database
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
