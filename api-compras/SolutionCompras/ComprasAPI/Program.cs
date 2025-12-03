@@ -177,7 +177,17 @@ app.UseCors("AllowAngular");
 // ----------------------
 // [Swagger] Middleware
 // ----------------------
-app.UseSwagger();
+app.UseSwagger(c =>
+{
+    // 👇 Esto intercepta el JSON generado y le agrega el servidor manualmente
+    c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
+    {
+        swaggerDoc.Servers = new List<OpenApiServer> 
+        { 
+            new OpenApiServer { Url = "/compras" } 
+        };
+    });
+});
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
