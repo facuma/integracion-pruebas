@@ -23,7 +23,9 @@ async function bootstrap() {
     .setDescription('Servicio de gestión de stock para el subsistema de Bienes y Servicios')
     .setVersion('1.1.0')
     .addBearerAuth()
+    .addServer('/stock')
     .build();
+    
   
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
