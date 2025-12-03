@@ -128,7 +128,7 @@ services:
       - ExternalApis__Logistica__BaseUrl=http://gateway:80/logistica/
       - ExternalApis__Stock_BaseUrl=http://gateway:80/stock/productos/
     ports:
-      - "5001:80"
+      - "5001:81"
     depends_on:
       compras-db:
         condition: service_healthy
