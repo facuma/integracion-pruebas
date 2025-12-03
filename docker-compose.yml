@@ -124,7 +124,7 @@ services:
       - Keycloak__ClientSecret=66ff9787-4fa5-46b3-b546-4ccbe604d233
       - Keycloak__RequireHttpsMetadata=true
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_URLS=http://+:81
       - ExternalApis__Logistica__BaseUrl=http://gateway:80/logistica/
       - ExternalApis__Stock_BaseUrl=http://gateway:80/stock/productos/
     ports:
