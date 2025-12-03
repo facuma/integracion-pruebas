@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.OpenApi.Models;
 // Ya no necesitamos 'MySqlConnector' aquí
 
 var builder = WebApplication.CreateBuilder(args);
@@ -129,7 +130,17 @@ await DatabaseInitializer.InitializeDatabaseAsync(app.Services);
 // Configurar pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    app.UseSwagger(c =>
+{
+    // 👇 Esto intercepta el JSON generado y le agrega el servidor manualmente
+    c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
+    {
+        swaggerDoc.Servers = new List<OpenApiServer> 
+        { 
+            new OpenApiServer { Url = "/logistica" } 
+        };
+    });
+});
     app.UseSwaggerUI();
 }
 app.UseCors("AllowFrontend");
