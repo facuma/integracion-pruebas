@@ -21,7 +21,11 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // Base de datos
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
-        mySqlOptions => mySqlOptions.MigrationsAssembly("ApiDePapas.Infrastructure")));
+        mySqlOptions => 
+        {
+            mySqlOptions.MigrationsAssembly("ApiDePapas.Infrastructure");
+            mySqlOptions.EnableStringComparisonTranslations();
+        }));
 
 // Para habilitar Swagger / OpenAPI (documentación interactiva)
 builder.Services
@@ -106,7 +110,8 @@ builder.Services.AddAuthorization();
 // --- JWT AUTHENTICATION CONFIGURATION END ---
 
 //Registro de servicios
-//builder.Services.AddHttpClient<IStockService, StockService>();
+
+//builder.Services.AddScoped<IStockService, FakeStockService>();
 builder.Services.AddHttpClient<IPurchasingService, PurchasingService>();
 builder.Services.AddScoped<IShippingRepository, ShippingRepository>();
 builder.Services.AddScoped<ICalculateCost, CalculateCost>();
@@ -131,8 +136,7 @@ await DatabaseInitializer.InitializeDatabaseAsync(app.Services);
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger(c =>
-{
-    // 👇 Esto intercepta el JSON generado y le agrega el servidor manualmente
+    {
     c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
     {
         swaggerDoc.Servers = new List<OpenApiServer> 
@@ -140,7 +144,7 @@ if (app.Environment.IsDevelopment())
             new OpenApiServer { Url = "/logistica" } 
         };
     });
-});
+    });
     app.UseSwaggerUI();
 }
 app.UseCors("AllowFrontend");
