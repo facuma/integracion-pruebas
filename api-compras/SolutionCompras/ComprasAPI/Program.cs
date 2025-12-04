@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.OpenApi.Models; // <--- AGREGA ESTO
+using Microsoft.OpenApi.Models;;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,17 +15,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration["Jwt:Key"] = "MI_CLAVE_SECRETA_DE_EXACTAMENTE_32_!!AAAA";
 builder.Configuration["Jwt:Issuer"] = "ComprasAPI";
 builder.Configuration["Jwt:Audience"] = "ComprasUsuarios";
-builder.Services.AddHttpClient();
+//builder.Services.AddHttpClient();
 
 // ✅ 1. CONFIGURAR STOCK SERVICE
-builder.Services.AddHttpClient<IStockService, StockService>((provider, client) =>
+builder.Services.AddHttpClient<IStockService, StockService>(client =>
 {
-    var config = provider.GetRequiredService<IConfiguration>();
-    var stockApiUrl = config["ExternalApis:Stock:BaseUrl"] ?? "http://localhost:5001";
-
-    client.BaseAddress = new Uri(stockApiUrl);
+    client.BaseAddress = new Uri("http://localhost:3000/");
     client.Timeout = TimeSpan.FromSeconds(30);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
 // ✅ 2. CONFIGURAR LOGÍSTICA SERVICE
@@ -39,8 +36,8 @@ builder.Services.AddHttpClient<ILogisticaService, LogisticaService>((provider, c
 });
 
 // ✅ 3. REGISTRAR SERVICIOS
-//builder.Services.AddScoped<IStockService, StockService>();
-//builder.Services.AddScoped<ILogisticaService, LogisticaService>();
+builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<ILogisticaService, LogisticaService>();
 
 // AÑADIR JWT CON KEYCLOACK
 builder.Services
@@ -179,8 +176,7 @@ app.UseCors("AllowAngular");
 // [Swagger] Middleware
 // ----------------------
 app.UseSwagger(c =>
-{
-    // 👇 Esto intercepta el JSON generado y le agrega el servidor manualmente
+    {
     c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
     {
         swaggerDoc.Servers = new List<OpenApiServer> 
@@ -188,7 +184,7 @@ app.UseSwagger(c =>
             new OpenApiServer { Url = "/compras" } 
         };
     });
-});
+    });
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
