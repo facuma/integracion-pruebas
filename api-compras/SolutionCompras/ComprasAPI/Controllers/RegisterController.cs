@@ -53,29 +53,6 @@ namespace ComprasAPI.Controllers
                     {
                         new { type = "password", value = request.Password, temporary = false }
                     }
-                };
-
-                var json = JsonSerializer.Serialize(userPayload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                // ✅ USAR URL DESDE CONFIGURACIÓN
-                var keycloakBaseUrl = _configuration["Keycloak:AdminBaseUrl"] ?? "https://keycloak.cubells.com.ar";
-                var keycloakUrl = $"{keycloakBaseUrl}/admin/realms/ds-2025-realm/users";
-
-                var response = await client.PostAsync(keycloakUrl, content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorBody = await response.Content.ReadAsStringAsync();
-                    return StatusCode((int)response.StatusCode, new { error = "Error al crear usuario en Keycloak", details = errorBody });
-                }
-
-                // 2️⃣ Guardar en base de datos local
-                var user = new User
-                {
-                    FirstName = request.FirstName,
-                    LastName = request.LastName,
                     Email = request.Email,
                     PasswordHash = HashPassword(request.Password),
                     CreatedAt = DateTime.UtcNow
@@ -94,31 +71,6 @@ namespace ComprasAPI.Controllers
         }
 
         // 🔐 Obtener token admin de Keycloak
-        private async Task<string?> GetAdminToken()
-        {
-            try
-            {
-                var client = _httpClientFactory.CreateClient();
-
-                // ✅ USAR URL DESDE CONFIGURACIÓN
-                var keycloakBaseUrl = _configuration["Keycloak:AdminBaseUrl"] ?? "https://keycloak.cubells.com.ar";
-                // Usar el realm correcto (ds-2025-realm) en lugar de master
-                var tokenUrl = $"{keycloakBaseUrl}/realms/ds-2025-realm/protocol/openid-connect/token";
-
-                var clientId = _configuration["Keycloak:ClientId"];
-                var clientSecret = _configuration["Keycloak:ClientSecret"];
-
-                var data = new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("client_id", clientId),
-                    new KeyValuePair<string, string>("client_secret", clientSecret),
-                    new KeyValuePair<string, string>("grant_type", "client_credentials")
-                });
-
-                var response = await client.PostAsync(tokenUrl, data);
-                if (!response.IsSuccessStatusCode)
-                {
-                    // Log del error
                     var errorContent = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Keycloak token error: {response.StatusCode} - {errorContent}");
                     return null;
