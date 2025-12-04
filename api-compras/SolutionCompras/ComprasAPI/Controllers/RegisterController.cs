@@ -60,7 +60,7 @@ namespace ComprasAPI.Controllers
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
                 // ✅ USAR URL DESDE CONFIGURACIÓN
-                var keycloakBaseUrl = _configuration["Keycloak:AdminBaseUrl"] ?? "http://localhost:8080";
+                var keycloakBaseUrl = _configuration["Keycloak:AdminBaseUrl"] ?? "https://keycloak.cubells.com.ar";
                 var keycloakUrl = $"{keycloakBaseUrl}/admin/realms/ds-2025-realm/users";
 
                 var response = await client.PostAsync(keycloakUrl, content);
@@ -101,15 +101,18 @@ namespace ComprasAPI.Controllers
                 var client = _httpClientFactory.CreateClient();
 
                 // ✅ USAR URL DESDE CONFIGURACIÓN
-                var keycloakBaseUrl = _configuration["Keycloak:AdminBaseUrl"] ?? "http://localhost:8080";
-                var tokenUrl = $"{keycloakBaseUrl}/realms/master/protocol/openid-connect/token";
+                var keycloakBaseUrl = _configuration["Keycloak:AdminBaseUrl"] ?? "https://keycloak.cubells.com.ar";
+                // Usar el realm correcto (ds-2025-realm) en lugar de master
+                var tokenUrl = $"{keycloakBaseUrl}/realms/ds-2025-realm/protocol/openid-connect/token";
+
+                var clientId = _configuration["Keycloak:ClientId"];
+                var clientSecret = _configuration["Keycloak:ClientSecret"];
 
                 var data = new FormUrlEncodedContent(new[]
                 {
-                    new KeyValuePair<string, string>("client_id", "admin-cli"),
-                    new KeyValuePair<string, string>("username", "admin"),
-                    new KeyValuePair<string, string>("password", "admin"),
-                    new KeyValuePair<string, string>("grant_type", "password")
+                    new KeyValuePair<string, string>("client_id", clientId),
+                    new KeyValuePair<string, string>("client_secret", clientSecret),
+                    new KeyValuePair<string, string>("grant_type", "client_credentials")
                 });
 
                 var response = await client.PostAsync(tokenUrl, data);
