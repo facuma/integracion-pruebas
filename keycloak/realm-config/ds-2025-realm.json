@@ -500,7 +500,9 @@
       "redirectUris": [
         "*"
       ],
-      "webOrigins": [ "http://localhost:3000" ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": true,
       "protocol": "openid-connect",
@@ -575,7 +577,18 @@
       ],
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": true,
-      "protocol": "openid-connect"
+      "protocol": "openid-connect",
+      "defaultClientScopes": [
+        "usuarios:read",
+        "usuarios:write",
+        "productos:read",
+        "envios:write",
+        "envios:read",
+        "reservas:read",
+        "reservas:write",
+        "stock:read",
+        "stock:write"
+      ]
     },
     {
       "clientId": "grupo-11",
