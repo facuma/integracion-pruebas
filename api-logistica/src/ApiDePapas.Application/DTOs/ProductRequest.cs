@@ -3,14 +3,15 @@ using System.Text.Json.Serialization;
 
 namespace ApiDePapas.Application.DTOs
 {
-    public record ProductRequest(
-        [property: JsonPropertyName("id")]
+    public class ProductRequest
+    {
+        [JsonPropertyName("id")]
         [Required]
-        int id,
+        public int id { get; set; }
 
-        [property: JsonPropertyName("quantity")]
+        [JsonPropertyName("quantity")]
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
-        int quantity
-    );
+        public int quantity { get; set; }
+    }
 }

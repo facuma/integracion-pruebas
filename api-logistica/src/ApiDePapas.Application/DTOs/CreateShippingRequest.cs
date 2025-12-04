@@ -5,25 +5,26 @@ using ApiDePapas.Domain.Entities;
 
 namespace ApiDePapas.Application.DTOs
 {
-    public record CreateShippingRequest(
-        [property: JsonPropertyName("order_id")]
+    public class CreateShippingRequest
+    {
+        [JsonPropertyName("order_id")]
         [Required]
-        int order_id,
+        public int order_id { get; set; }
 
-        [property: JsonPropertyName("user_id")]
+        [JsonPropertyName("user_id")]
         [Required]
-        int user_id,
+        public int user_id { get; set; }
 
-        [property: JsonPropertyName("delivery_address")]
+        [JsonPropertyName("delivery_address")]
         [Required]
-        DeliveryAddressRequest delivery_address,
+        public DeliveryAddressRequest delivery_address { get; set; } = null!;
 
-        [property: JsonPropertyName("transport_type")]
+        [JsonPropertyName("transport_type")]
         [Required]
-        TransportType transport_type,
+        public TransportType transport_type { get; set; }
 
-        [property: JsonPropertyName("products")]
+        [JsonPropertyName("products")]
         [Required]
-        List<ProductRequest> products
-    );
+        public List<ProductRequest> products { get; set; } = new();
+    }
 }

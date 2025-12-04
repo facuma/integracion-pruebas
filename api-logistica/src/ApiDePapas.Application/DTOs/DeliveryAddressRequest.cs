@@ -1,26 +1,24 @@
-using System.Collections.Generic;
-using ApiDePapas.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace ApiDePapas.Application.DTOs
 {
-    // Define el DTO de la Dirección de ENTRADA
-    public record DeliveryAddressRequest(
-        [property: JsonPropertyName("street")]
+    public class DeliveryAddressRequest
+    {
+        [JsonPropertyName("street")]
         [Required]
-        string street = "",
+        public string street { get; set; } = string.Empty;
 
-        [property: JsonPropertyName("number")]
+        [JsonPropertyName("number")]
         [Required]
-        int number = 0,
+        public int number { get; set; }
 
-        [property: JsonPropertyName("postal_code")]
+        [JsonPropertyName("postal_code")]
         [Required]
-        string postal_code = "",
+        public string postal_code { get; set; } = string.Empty;
 
-        [property: JsonPropertyName("locality_name")]
+        [JsonPropertyName("locality_name")]
         [Required]
-        string locality_name = ""
-    );
+        public string locality_name { get; set; } = string.Empty;
+    }
 }
