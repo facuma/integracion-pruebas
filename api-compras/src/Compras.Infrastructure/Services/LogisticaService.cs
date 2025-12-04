@@ -436,9 +436,9 @@ namespace Compras.Infrastructure.Services
 
         private class TransportMethodApi
         {
-            public string type { get; set; }
-            public string name { get; set; }
-            public string estimated_days { get; set; }
+            public string? type { get; set; }
+            public string? name { get; set; }
+            public string? estimated_days { get; set; }
         }
     }
 }
