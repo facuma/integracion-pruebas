@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  compras-db:
+    image: postgres:15
+    container_name: compras-postgres
+    environment:
+      POSTGRES_DB: compras_db
+      POSTGRES_USER: compras_user
+      POSTGRES_PASSWORD: compras_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - compras_db_data:/var/lib/postgresql/data
+    networks:
+      - compras-network
+
+  compras-api:
+    build: .
+    container_name: compras-backend
+    ports:
+      - "5001:81"
+    environment:
+      DATABASE_URL: postgresql://compras_user:compras_pass@compras-db:5432/compras_db
+      STOCK_API_URL: https://api.cubells.com.ar/stock
+      SHIPPING_API_URL: https://api.cubells.com.ar/logistica
+      KEYCLOAK_TOKEN_URL: https://keycloak.cubells.com.ar/realms/ds-2025-realm/protocol/openid-connect/token
+      # Stock API credentials (grupo-08)
+      STOCK_CLIENT_ID: grupo-08
+      STOCK_CLIENT_SECRET: 248f42b5-7007-47d1-a94e-e8941f352f6f
+      # Logística API credentials (grupo-06)
+      LOGISTICA_CLIENT_ID: grupo-06
+      LOGISTICA_CLIENT_SECRET: 8dc00e75-ccea-4d1a-be3d-b586733e256c
+      SECRET_KEY: change-me-in-production-please
+      ENABLE_MOCK_AUTH: "True"
+    depends_on:
+      - compras-db
+    networks:
+      - compras-network
+
+volumes:
+  compras_db_data:
+
+networks:
+  compras-network:
+    driver: bridge
