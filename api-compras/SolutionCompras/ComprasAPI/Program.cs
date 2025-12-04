@@ -6,16 +6,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.OpenApi.Models;;
+using Microsoft.OpenApi.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuración JWT en appsettings.json
-builder.Configuration["Jwt:Key"] = "MI_CLAVE_SECRETA_DE_EXACTAMENTE_32_!!AAAA";
-builder.Configuration["Jwt:Issuer"] = "ComprasAPI";
-builder.Configuration["Jwt:Audience"] = "ComprasUsuarios";
-//builder.Services.AddHttpClient();
+// Asegurarse de que estas claves existan en appsettings.json
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var jwtKey = jwtSettings["Key"] ?? "ClaveSuperSecreta123456789";
+var jwtIssuer = jwtSettings["Issuer"] ?? "https://localhost:7248";
+var jwtAudience = jwtSettings["Audience"] ?? "https://localhost:7248";
 
 // ✅ 1. CONFIGURAR STOCK SERVICE
 builder.Services.AddHttpClient<IStockService, StockService>(client =>
@@ -39,50 +40,21 @@ builder.Services.AddHttpClient<ILogisticaService, LogisticaService>((provider, c
 builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<ILogisticaService, LogisticaService>();
 
-// AÑADIR JWT CON KEYCLOACK
+// AÑADIR JWT LOCAL (Bypass Keycloak para Auth entrante)
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var configuration = builder.Configuration;
-
-        var authority = configuration["Keycloak:Authority"];
-        var audience = configuration["Keycloak:Audience"];
-        var requireHttpsMetadata = configuration.GetValue<bool>("Keycloak:RequireHttpsMetadata");
-
-        options.Authority = authority;
-        options.Audience = audience;
-        options.RequireHttpsMetadata = bool.Parse(builder.Configuration["Keycloak:RequireHttpsMetadata"]);
-
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidateAudience = false,
+            ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidAudience = audience,
-            ValidIssuer = authority,
-            ClockSkew = TimeSpan.FromHours(3)
-        };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = e =>
-            {
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = e =>
-            {
-                return Task.CompletedTask;
-            },
-            OnAuthenticationFailed = e =>
-            {
-                return Task.CompletedTask;
-            },
-            OnChallenge = e =>
-            {
-                return Task.CompletedTask;
-            }
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.Zero
         };
     });
 

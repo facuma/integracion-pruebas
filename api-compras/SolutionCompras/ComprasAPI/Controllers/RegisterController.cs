@@ -4,8 +4,6 @@ using ComprasAPI.Data;
 using ComprasAPI.Models;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using System.Net.Http.Headers;
 
 namespace ComprasAPI.Controllers
 {
@@ -14,14 +12,10 @@ namespace ComprasAPI.Controllers
     public class RegisterController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IConfiguration _configuration;
 
-        public RegisterController(ApplicationDbContext context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public RegisterController(ApplicationDbContext context)
         {
             _context = context;
-            _httpClientFactory = httpClientFactory;
-            _configuration = configuration;
         }
 
         [HttpPost]
@@ -35,43 +29,9 @@ namespace ComprasAPI.Controllers
 
             try
             {
-                // 1️⃣ Crear usuario en Keycloak
-                var token = await GetAdminToken();
-                if (token == null)
-                    return StatusCode(500, new { error = "No se pudo obtener el token de administrador de Keycloak" });
-
-                var client = _httpClientFactory.CreateClient();
-
-                var userPayload = new
-                {
-                    username = request.Email,
-                    email = request.Email,
-                    enabled = true,
-                    firstName = request.FirstName,
-                    lastName = request.LastName,
-                    credentials = new[]
-                    {
-                        new { type = "password", value = request.Password, temporary = false }
-                    }
-                };
-
-                var json = JsonSerializer.Serialize(userPayload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                // ✅ USAR URL DESDE CONFIGURACIÓN
-                var keycloakBaseUrl = _configuration["Keycloak:AdminBaseUrl"] ?? "https://keycloak.cubells.com.ar";
-                var keycloakUrl = $"{keycloakBaseUrl}/admin/realms/ds-2025-realm/users";
-
-                var response = await client.PostAsync(keycloakUrl, content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorBody = await response.Content.ReadAsStringAsync();
-                    return StatusCode((int)response.StatusCode, new { error = "Error al crear usuario en Keycloak", details = errorBody });
-                }
-
-                // 2️⃣ Guardar en base de datos local
+                // ⚠️ BYPASS KEYCLOAK: Guardar DIRECTAMENTE en base de datos local
+                // Se eliminó la lógica de Keycloak por solicitud del usuario.
+                
                 var user = new User
                 {
                     FirstName = request.FirstName,
@@ -84,58 +44,12 @@ namespace ComprasAPI.Controllers
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = "Usuario registrado correctamente" });
+                return Ok(new { message = "Usuario registrado correctamente (Local DB Only)" });
             }
             catch (Exception ex)
             {
                 // Log the exception
                 return StatusCode(500, new { error = "Error interno del servidor", details = ex.Message });
-            }
-        }
-
-        // 🔐 Obtener token admin de Keycloak
-        private async Task<string?> GetAdminToken()
-        {
-            try
-            {
-                var client = _httpClientFactory.CreateClient();
-
-                // ✅ USAR URL DESDE CONFIGURACIÓN
-                var keycloakBaseUrl = _configuration["Keycloak:AdminBaseUrl"] ?? "https://keycloak.cubells.com.ar";
-                // Usar el realm correcto (ds-2025-realm) en lugar de master
-                var tokenUrl = $"{keycloakBaseUrl}/realms/ds-2025-realm/protocol/openid-connect/token";
-
-                // HARDCODED CREDENTIALS FROM API-LOGISTICA (grupo-06)
-                var clientId = "grupo-06";
-                var clientSecret = "8dc00e75-ccea-4d1a-be3d-b586733e256c";
-                // Solicitamos el scope para crear usuarios
-                var scope = "openid usuarios:write";
-
-                var data = new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("client_id", clientId),
-                    new KeyValuePair<string, string>("client_secret", clientSecret),
-                    new KeyValuePair<string, string>("grant_type", "client_credentials"),
-                    new KeyValuePair<string, string>("scope", scope)
-                });
-
-                var response = await client.PostAsync(tokenUrl, data);
-                if (!response.IsSuccessStatusCode)
-                {
-                    // Log del error
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Keycloak token error: {response.StatusCode} - {errorContent}");
-                    return null;
-                }
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                return doc.RootElement.GetProperty("access_token").GetString();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception in GetAdminToken: {ex.Message}");
-                return null;
             }
         }
 
