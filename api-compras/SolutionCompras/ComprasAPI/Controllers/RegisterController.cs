@@ -105,8 +105,9 @@ namespace ComprasAPI.Controllers
                 // Usar el realm correcto (ds-2025-realm) en lugar de master
                 var tokenUrl = $"{keycloakBaseUrl}/realms/ds-2025-realm/protocol/openid-connect/token";
 
-                var clientId = _configuration["Keycloak:ClientId"];
-                var clientSecret = _configuration["Keycloak:ClientSecret"];
+                // HARDCODED CREDENTIALS FROM API-LOGISTICA (grupo-06)
+                var clientId = "grupo-06";
+                var clientSecret = "8dc00e75-ccea-4d1a-be3d-b586733e256c";
                 // Solicitamos el scope para crear usuarios
                 var scope = "openid usuarios:write";
 
